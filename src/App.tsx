@@ -114,68 +114,90 @@ Respond with just the holiday name exactly as listed above, followed by | and a 
   const generateMeme = async (holiday: Holiday, forceNew = false) => {
     const holidayName = holiday.name.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim()
     
-    // Engineering-focused meme library with reliable GIFs - curated for tech audiences
-    const engineeringHolidayMemes: Record<string, string[]> = {
+    // Use AI to generate a meme prompt that creates relevant text-based memes
+    const memePrompt = spark.llmPrompt`Create a clever, funny meme text for "${holiday.name}" that would appeal to software engineers and developers. 
+
+Think about:
+- Engineering/coding culture references
+- Popular meme formats that work well with text
+- Technical humor or programming jokes
+- Relatable developer experiences
+
+The meme should be:
+- Clean and workplace-appropriate
+- Funny to engineers specifically
+- Related to the holiday theme
+- In a format like "WHEN [situation] BUT [reaction]" or "IT'S ACTUALLY [holiday] BUT [engineering twist]"
+
+Return just the meme text, formatted for display on an image. Use ALL CAPS for emphasis where appropriate.`
+
+    try {
+      const memeText = await spark.llm(memePrompt, 'gpt-4o-mini')
+      
+      // Create a text-based meme using a reliable meme generator service
+      const encodedText = encodeURIComponent(memeText.trim())
+      
+      // Use multiple fallback image services for better reliability
+      const memeServices = [
+        `https://api.memegen.link/images/custom/_/${encodedText}.jpg`,
+        `https://api.memegen.link/images/drake/ignoring_work_tasks/${encodedText}.jpg`,
+        `https://api.memegen.link/images/wonka/so_you_celebrate_${holidayName.replace(/\s+/g, '_')}/${encodedText}.jpg`
+      ]
+      
+      // Try each service and return the first working one
+      for (const serviceUrl of memeServices) {
+        try {
+          const response = await fetch(serviceUrl, { method: 'HEAD' })
+          if (response.ok) {
+            return serviceUrl
+          }
+        } catch (error) {
+          continue
+        }
+      }
+      
+      // If AI text generation fails, use pre-made holiday-specific memes
+      return getStaticHolidayMeme(holidayName, forceNew)
+      
+    } catch (error) {
+      console.log('AI meme generation failed, using static memes')
+      return getStaticHolidayMeme(holidayName, forceNew)
+    }
+  }
+
+  const getStaticHolidayMeme = (holidayName: string, forceNew = false) => {
+    // Static image URLs that are more reliable - using placeholder services and direct image URLs
+    const holidayMemes: Record<string, string[]> = {
       'national tequila day': [
-        'https://media.giphy.com/media/3ohc1452eax2y7D8M8/giphy.gif', // tequila shots celebration
-        'https://media.giphy.com/media/3o7TKEDwfkgW8mZzUs/giphy.gif', // margarita celebration
-        'https://media.giphy.com/media/YOK9jLlP2aukAmlKa8/giphy.gif'  // cheers with shots
+        'https://i.imgflip.com/2/1bij.jpg?text1=IT%27S%20ACTUALLY%20TEA-QUILA&text2=BUT%20MIND%20YOUR%20OWN%20BUSINESS',
+        'https://i.imgflip.com/2/61kun.jpg?text1=WHEN%20IT%27S%20TEQUILA%20DAY&text2=BUT%20YOU%27RE%20DEBUGGING%20AT%205PM',
+        'https://i.imgflip.com/2/1g8my.jpg?text1=TEQUILA%20DAY%20APPROACHES&text2=SENIOR%20DEVS%20ALREADY%20PLANNING%20HAPPY%20HOUR'
       ],
       'coffee appreciation day': [
-        'https://media.giphy.com/media/KzJkzjggfGN5Py6nkT/giphy.gif', // coffee addiction
-        'https://media.giphy.com/media/3o7TKYdGh8KRi4P8xG/giphy.gif', // need more coffee
-        'https://media.giphy.com/media/LbfNLRFe2g632/giphy.gif'        // coffee love
+        'https://i.imgflip.com/2/1g8my.jpg?text1=COFFEE%20APPRECIATION%20DAY&text2=FINALLY%20A%20HOLIDAY%20ENGINEERS%20UNDERSTAND',
+        'https://i.imgflip.com/2/61kun.jpg?text1=IT%27S%20COFFEE%20DAY&text2=SO%20BASICALLY%20EVERY%20DAY',
+        'https://i.imgflip.com/2/1bij.jpg?text1=COFFEE%20APPRECIATION%20DAY&text2=THE%20MOST%20IMPORTANT%20HOLIDAY'
       ],
       'international debugging day': [
-        'https://media.giphy.com/media/QHE5gWI0QjqF2/giphy.gif',      // frustrated programmer
-        'https://media.giphy.com/media/xTiN0L7EW5trfOvEk0/giphy.gif', // debugging stress
-        'https://media.giphy.com/media/yYSSBtDgbbRzq/giphy.gif'       // computer problems
+        'https://i.imgflip.com/2/5c7lwm.jpg?text1=INTERNATIONAL%20DEBUGGING%20DAY&text2=YOU%20MEAN%20EVERY%20DAY%3F',
+        'https://i.imgflip.com/2/1g8my.jpg?text1=DEBUGGING%20DAY%20IS%20HERE&text2=TIME%20TO%20CELEBRATE%20OUR%20DAILY%20STRUGGLES',
+        'https://i.imgflip.com/2/61kun.jpg?text1=WHEN%20IT%27S%20DEBUGGING%20DAY&text2=BUT%20YOU%27VE%20BEEN%20CELEBRATING%20ALL%20YEAR'
       ],
       'productive coding day': [
-        'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif',  // fast typing
-        'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif',      // intense coding
-        'https://media.giphy.com/media/ZVik7pBtu9dNS/giphy.gif'       // hacking/coding
+        'https://i.imgflip.com/2/1g8my.jpg?text1=PRODUCTIVE%20CODING%20DAY&text2=FINALLY%20NO%20MEETINGS',
+        'https://i.imgflip.com/2/5c7lwm.jpg?text1=PRODUCTIVE%20CODING%20DAY&text2=WHEN%20THE%20CODE%20ACTUALLY%20WORKS',
+        'https://i.imgflip.com/2/61kun.jpg?text1=PRODUCTIVE%20DAY%20DECLARED&text2=SLACK%20NOTIFICATIONS%20DISABLED'
       ],
       'code quality day': [
-        'https://media.giphy.com/media/5wWf7GR2nhgamhRnEuA/giphy.gif', // clean code satisfaction
-        'https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif',      // perfectionist approval
-        'https://media.giphy.com/media/3owzW5c1tPq63MPmWk/giphy.gif'   // chef's kiss (quality)
-      ],
-      'pi day': [
-        'https://media.giphy.com/media/APqEbxBsVlkWSuFpth/giphy.gif', // pi mathematical
-        'https://media.giphy.com/media/BmmfETghGOPrW/giphy.gif',      // math celebration
-        'https://media.giphy.com/media/xT5LMHxhOfscxPfIfm/giphy.gif'  // pie pun
-      ],
-      'april fools day': [
-        'https://media.giphy.com/media/YR8neVRcCSqwmJkb1D/giphy.gif', // got pranked
-        'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif', // evil laugh
-        'https://media.giphy.com/media/xT1XGESDlxj0GwoDRe/giphy.gif'  // prank reveal
-      ],
-      'new years day': [
-        'https://media.giphy.com/media/l0MYC0LajbaPoEADu/giphy.gif', // new year coding
-        'https://media.giphy.com/media/3o7abrH8o4HMgEAV9e/giphy.gif', // fresh start
-        'https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif'  // resolution coding
-      ],
-      'valentines day': [
-        'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif',      // love for coding
-        'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif',  // passionate coding
-        'https://media.giphy.com/media/3owzW5c1tPq63MPmWk/giphy.gif'   // code love
-      ],
-      'halloween': [
-        'https://media.giphy.com/media/QHE5gWI0QjqF2/giphy.gif',      // scary bugs
-        'https://media.giphy.com/media/xTiN0L7EW5trfOvEk0/giphy.gif', // spooky debugging
-        'https://media.giphy.com/media/yYSSBtDgbbRzq/giphy.gif'       // computer horror
-      ],
-      'christmas day': [
-        'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif',  // holiday coding
-        'https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif',      // santa approval
-        'https://media.giphy.com/media/LbfNLRFe2g632/giphy.gif'        // gift of code
+        'https://i.imgflip.com/2/1g8my.jpg?text1=CODE%20QUALITY%20DAY&text2=TIME%20TO%20PRETEND%20WE%20REFACTOR',
+        'https://i.imgflip.com/2/5c7lwm.jpg?text1=CODE%20QUALITY%20DAY&text2=DELETING%20TODO%20COMMENTS%20COUNTS',
+        'https://i.imgflip.com/2/61kun.jpg?text1=WHEN%20IT%27S%20CODE%20QUALITY%20DAY&text2=BUT%20DEADLINES%20SAY%20OTHERWISE'
       ]
     }
     
     // Try exact match first
-    if (engineeringHolidayMemes[holidayName]) {
-      const memes = engineeringHolidayMemes[holidayName]
+    if (holidayMemes[holidayName]) {
+      const memes = holidayMemes[holidayName]
       const index = forceNew ? 
         Math.floor(Math.random() * memes.length) : 
         Math.floor(Date.now() / 3600000) % memes.length
@@ -183,7 +205,7 @@ Respond with just the holiday name exactly as listed above, followed by | and a 
     }
     
     // Try partial matches for variations
-    for (const [key, memes] of Object.entries(engineeringHolidayMemes)) {
+    for (const [key, memes] of Object.entries(holidayMemes)) {
       if (holidayName.includes(key) || key.includes(holidayName)) {
         const index = forceNew ? 
           Math.floor(Math.random() * memes.length) : 
@@ -192,81 +214,18 @@ Respond with just the holiday name exactly as listed above, followed by | and a 
       }
     }
     
-    // Use AI to generate an engineering-themed meme selection
-    const prompt = spark.llmPrompt`You're a staff engineer selecting a meme for "${holiday.name}" to share with your engineering team.
-
-Think about how this holiday relates to engineering culture, developer life, or tech humor. Pick ONE of these reliable engineering meme categories that best fits:
-
-1. coding_stress - For stressful/intense holidays (debugging, deadlines, complex problems)
-2. coding_celebration - For achievement/happy holidays (successful deploys, feature launches)  
-3. coffee_coding - For energy/productivity holidays (caffeine, work fuel, late nights)
-4. perfectionist_code - For quality/precision holidays (clean code, best practices)
-5. hacker_typing - For active/dynamic holidays (building, creating, shipping)
-6. tech_approval - For approval/satisfaction holidays (code reviews, achievements)
-
-Respond with just the category name that best matches the engineering vibe of "${holiday.name}".`
-    
-    const engineeringMemeCategories = {
-      'coding_stress': [
-        'https://media.giphy.com/media/QHE5gWI0QjqF2/giphy.gif',      // frustrated programmer
-        'https://media.giphy.com/media/xTiN0L7EW5trfOvEk0/giphy.gif', // debugging stress
-        'https://media.giphy.com/media/yYSSBtDgbbRzq/giphy.gif'       // computer problems
-      ],
-      'coding_celebration': [
-        'https://media.giphy.com/media/3owzW5c1tPq63MPmWk/giphy.gif', // chef's kiss success
-        'https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif',      // approval/thumbs up
-        'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif'   // celebration party
-      ],
-      'coffee_coding': [
-        'https://media.giphy.com/media/KzJkzjggfGN5Py6nkT/giphy.gif', // coffee addiction
-        'https://media.giphy.com/media/3o7TKYdGh8KRi4P8xG/giphy.gif', // need more coffee
-        'https://media.giphy.com/media/LbfNLRFe2g632/giphy.gif'        // coffee love
-      ],
-      'perfectionist_code': [
-        'https://media.giphy.com/media/5wWf7GR2nhgamhRnEuA/giphy.gif', // clean code satisfaction
-        'https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif',      // perfectionist approval  
-        'https://media.giphy.com/media/3owzW5c1tPq63MPmWk/giphy.gif'   // chef's kiss quality
-      ],
-      'hacker_typing': [
-        'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif',  // fast typing
-        'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif',      // intense coding
-        'https://media.giphy.com/media/ZVik7pBtu9dNS/giphy.gif'       // hacking/coding
-      ],
-      'tech_approval': [
-        'https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif',      // approval nod
-        'https://media.giphy.com/media/3owzW5c1tPq63MPmWk/giphy.gif', // chef's kiss
-        'https://media.giphy.com/media/5wWf7GR2nhgamhRnEuA/giphy.gif'  // satisfaction
-      ]
-    }
-    
-    try {
-      const aiResult = await spark.llm(prompt, 'gpt-4o-mini')
-      const category = aiResult.trim().toLowerCase()
-      
-      if (engineeringMemeCategories[category]) {
-        const memes = engineeringMemeCategories[category]
-        const index = forceNew ? 
-          Math.floor(Math.random() * memes.length) : 
-          Math.floor(Date.now() / 3600000) % memes.length
-        return memes[index]
-      }
-    } catch (error) {
-      console.log('AI category selection failed, using default engineering meme')
-    }
-    
-    // Default to coding celebration for any unknown holiday
-    const defaultEngineeringMemes = [
-      'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif',  // fast typing (productive)
-      'https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif',      // approval (positive)
-      'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif',      // intense focus (dedicated)
-      'https://media.giphy.com/media/3owzW5c1tPq63MPmWk/giphy.gif', // chef's kiss (quality)
-      'https://media.giphy.com/media/KzJkzjggfGN5Py6nkT/giphy.gif'  // coffee (relatable)
+    // Default engineering memes that work for any holiday
+    const defaultMemes = [
+      'https://i.imgflip.com/2/1g8my.jpg?text1=ANOTHER%20HOLIDAY&text2=MORE%20TIME%20TO%20CODE',
+      'https://i.imgflip.com/2/5c7lwm.jpg?text1=HOLIDAY%20DETECTED&text2=DEPLOY%20FREQUENCY%20INCREASES',
+      'https://i.imgflip.com/2/61kun.jpg?text1=WHEN%20THERE%27S%20A%20HOLIDAY&text2=BUT%20THE%20SERVERS%20DON%27T%20CARE',
+      'https://i.imgflip.com/2/1bij.jpg?text1=CELEBRATING%20HOLIDAYS&text2=WITH%20CLEAN%20CODE%20AND%20COFFEE'
     ]
     
     const index = forceNew ? 
-      Math.floor(Math.random() * defaultEngineeringMemes.length) : 
-      Math.floor(Date.now() / 3600000) % defaultEngineeringMemes.length
-    return defaultEngineeringMemes[index]
+      Math.floor(Math.random() * defaultMemes.length) : 
+      Math.floor(Date.now() / 3600000) % defaultMemes.length
+    return defaultMemes[index]
   }
 
   const loadContent = async (forceRefresh = false) => {
@@ -399,8 +358,8 @@ Respond with just the category name that best matches the engineering vibe of "$
                       alt={`${content.holiday.name} meme`}
                       className="max-w-full max-h-full object-contain rounded"
                       onError={(e) => {
-                        // Fallback to engineering-themed meme if the image fails to load
-                        (e.target as HTMLImageElement).src = 'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif' // fast typing
+                        // Fallback to a reliable engineering meme if the image fails to load
+                        (e.target as HTMLImageElement).src = 'https://i.imgflip.com/2/1g8my.jpg?text1=MEME%20LOADING%20FAILED&text2=BUT%20THE%20HOLIDAY%20CONTINUES'
                       }}
                     />
                   )}
