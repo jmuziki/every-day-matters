@@ -289,7 +289,6 @@ Return just the meme text, formatted for display on an image. Use ALL CAPS for e
       <div className="mx-auto max-w-2xl space-y-6">
         <header className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-foreground">Every Day Matters</h1>
-          <p className="text-muted-foreground">Daily holiday discoveries for your engineering team</p>
         </header>
 
         {isLoading ? (
@@ -341,11 +340,6 @@ Return just the meme text, formatted for display on an image. Use ALL CAPS for e
               )}
 
               <div className="bg-muted border-2 border-dashed border-border rounded-lg overflow-hidden">
-                <div className="p-4 border-b border-border">
-                  <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium text-center">
-                    Engineering Team Meme
-                  </div>
-                </div>
                 <div className="aspect-video bg-card flex items-center justify-center">
                   {memeLoading ? (
                     <div className="flex flex-col items-center gap-2">
