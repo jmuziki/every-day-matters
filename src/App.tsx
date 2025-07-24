@@ -288,7 +288,7 @@ Return just the meme text, formatted for display on an image. Use ALL CAPS for e
     <div className="min-h-screen bg-background p-4">
       <div className="mx-auto max-w-2xl space-y-6">
         <header className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Holiday Fun</h1>
+          <h1 className="text-3xl font-bold text-foreground">Every Day Matters</h1>
           <p className="text-muted-foreground">Daily holiday discoveries for your engineering team</p>
         </header>
 
