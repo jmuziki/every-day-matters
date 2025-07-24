@@ -61,6 +61,8 @@ function App() {
       '2-14': [{ name: 'Valentine\'s Day', description: 'Love is in the air... and in your code' }],
       '3-14': [{ name: 'Pi Day', description: 'Celebrating the most famous mathematical constant' }],
       '4-1': [{ name: 'April Fools\' Day', description: 'The day when even your IDE plays pranks' }],
+      '7-24': [{ name: 'National Tequila Day', description: 'Time to debug with a different kind of spirit!' }],
+      '9-29': [{ name: 'Coffee Appreciation Day', description: 'Fuel for developers worldwide' }],
       '10-31': [{ name: 'Halloween', description: 'The scariest bugs come out today' }],
       '12-25': [{ name: 'Christmas Day', description: 'Time for some holiday coding magic' }]
     }
@@ -68,7 +70,7 @@ function App() {
     return fallbackHolidays[monthDay] || [
       { name: 'International Debugging Day', description: 'Every day is debugging day for engineers!' },
       { name: 'Productive Coding Day', description: 'A perfect day to ship some features' },
-      { name: 'Coffee Appreciation Day', description: 'Fuel for developers worldwide' }
+      { name: 'Code Quality Day', description: 'Time to refactor and make things beautiful' }
     ]
   }
 
