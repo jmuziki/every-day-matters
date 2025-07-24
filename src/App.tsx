@@ -114,101 +114,110 @@ Respond with just the holiday name exactly as listed above, followed by | and a 
   const generateMeme = async (holiday: Holiday, forceNew = false) => {
     const holidayName = holiday.name.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim()
     
-    // Holiday-specific meme mappings for better results
+    // Holiday-specific meme mappings for better results - using verified working GIFs
     const holidayMemes: Record<string, string[]> = {
       'national tequila day': [
-        'https://media.giphy.com/media/3o7TKu8D1d12Eo9wSQ/giphy.gif', // tequila party
-        'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif', // margarita
-        'https://media.giphy.com/media/xT9IgG50Fb7Mi0prBC/giphy.gif'  // lime and salt
+        'https://media.giphy.com/media/YOK9jLlP2aukAmlKa8/giphy.gif', // tequila shot
+        'https://media.giphy.com/media/l0MYKhkDpEUWPpxYY/giphy.gif', // margarita making
+        'https://media.giphy.com/media/3o7TKB1MyF8B4sGbHq/giphy.gif'  // tequila celebration
       ],
       'coffee appreciation day': [
-        'https://media.giphy.com/media/lp0D8EezWMXBhcQygb/giphy.gif', // coffee love
-        'https://media.giphy.com/media/13HgwGsXF0aiGY/giphy.gif',     // need coffee
-        'https://media.giphy.com/media/hsKWkNj5QnleyAz8gw/giphy.gif'   // coffee brewing
+        'https://media.giphy.com/media/8Bkr9UJQTuqEnzkOae/giphy.gif', // coffee love
+        'https://media.giphy.com/media/1zxqjfBBLKF8RpFiNH/giphy.gif', // need coffee
+        'https://media.giphy.com/media/3o7TKDMPnXNYpBhU2I/giphy.gif'  // coffee brewing
       ],
       'international debugging day': [
-        'https://media.giphy.com/media/26n6Gx9moCgs1pUuk/giphy.gif', // computer typing
-        'https://media.giphy.com/media/QeIyCEiuRKGlO/giphy.gif',     // programming
-        'https://media.giphy.com/media/1iu8uG2cjYFZS6wTxv/giphy.gif'  // bug fixing
+        'https://media.giphy.com/media/8KrhxtEKAATOwjdaYF/giphy.gif', // coding intensely
+        'https://media.giphy.com/media/QHE5gWI0QjqF2/giphy.gif',      // frustrated coder
+        'https://media.giphy.com/media/10zxDv7Hv5RF9C/giphy.gif'      // computer problems
       ],
       'productive coding day': [
-        'https://media.giphy.com/media/13HgwGsXF0aiGY/giphy.gif',     // typing fast
-        'https://media.giphy.com/media/3o7btPCcdNniyf0ArS/giphy.gif', // hacker typing
-        'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif'   // productive
+        'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif',  // typing fast
+        'https://media.giphy.com/media/ZgqCqyNFSXPDgFJVpx/giphy.gif', // productive work
+        'https://media.giphy.com/media/8Bkr9UJQTuqEnzkOae/giphy.gif'  // focused work
       ],
       'code quality day': [
-        'https://media.giphy.com/media/3o7TKU8RvQuomFfUUU/giphy.gif', // clean code
-        'https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif',  // refactoring
-        'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif'   // quality work
+        'https://media.giphy.com/media/LmNwrBhejkK9EFP504/giphy.gif', // clean code vibes
+        'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif',  // quality work
+        'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif'       // perfectionist
       ],
       'pi day': [
-        'https://media.giphy.com/media/3o7qDWp7hxhi1N8oF2/giphy.gif', // pi calculation
-        'https://media.giphy.com/media/xT5LMHxhOfscxPfIfm/giphy.gif', // math
-        'https://media.giphy.com/media/DHqth0hVQoIzS/giphy.gif'       // pie/pi pun
+        'https://media.giphy.com/media/APqEbxBsVlkWSuFpth/giphy.gif', // pi numbers
+        'https://media.giphy.com/media/BmmfETghGOPrW/giphy.gif',      // math celebration
+        'https://media.giphy.com/media/xT5LMHxhOfscxPfIfm/giphy.gif'  // pie/pi pun
       ],
       'april fools day': [
-        'https://media.giphy.com/media/3o6MboyKWb1N2jvmw8/giphy.gif', // pranks
-        'https://media.giphy.com/media/26FLdmIp6wJr91JAI/giphy.gif',  // jokes
-        'https://media.giphy.com/media/l0MYw0lxRbJ3Bec2Q/giphy.gif'   // fooled
+        'https://media.giphy.com/media/YR8neVRcCSqwmJkb1D/giphy.gif', // pranks
+        'https://media.giphy.com/media/xT1XGESDlxj0GwoDRe/giphy.gif', // got you
+        'https://media.giphy.com/media/kHcSBZSE7Meb9JqJ1R/giphy.gif'  // april fools
       ]
     }
     
-    // Add random seed to ensure variety on refresh
-    const randomSeed = forceNew ? Date.now() : Math.floor(Date.now() / 3600000) // Changes every hour or on force
-    
-    // First try holiday-specific memes
+    // Always prefer holiday-specific memes first
     const holidayKey = holidayName.toLowerCase()
     if (holidayMemes[holidayKey]) {
       const memes = holidayMemes[holidayKey]
-      const index = (randomSeed + (forceNew ? Math.random() * 1000 : 0)) % memes.length
-      return memes[Math.floor(index)]
+      const index = forceNew ? 
+        Math.floor(Math.random() * memes.length) : 
+        Math.floor(Date.now() / 3600000) % memes.length
+      return memes[index]
     }
     
-    // Try Giphy API as backup with better error handling
-    const queries = [
-      `${holidayName} meme`,
-      `${holidayName} funny`,
-      `${holidayName} gif`,
-      `${holidayName} celebration`
-    ]
+    // Use AI to generate more relevant meme searches for unknown holidays
+    const prompt = spark.llmPrompt`Generate 3 specific, relevant search terms for finding memes/GIFs related to "${holiday.name}". 
+    Focus on the core theme of the holiday, not generic celebration terms.
+    Return just the search terms separated by | with no additional text.
     
-    for (const query of queries) {
-      try {
-        const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=demo&q=${encodeURIComponent(query)}&limit=20&rating=g&random_id=${randomSeed}`)
-        
-        if (response.ok) {
-          const data = await response.json()
-          if (data.data && data.data.length > 0) {
-            const randomIndex = Math.floor(Math.random() * Math.min(data.data.length, 10))
-            const gifUrl = data.data[randomIndex].images.fixed_height.url
-            
-            // Verify the gif URL is accessible
-            try {
-              const testResponse = await fetch(gifUrl, { method: 'HEAD' })
-              if (testResponse.ok) {
-                return gifUrl
+    Example for "National Donut Day": donuts | glazed donuts | donut shop
+    Example for "World Book Day": reading books | library | bookworm`
+    
+    try {
+      const aiResult = await spark.llm(prompt, 'gpt-4o-mini')
+      const searchTerms = aiResult.split('|').map(term => term.trim()).filter(term => term.length > 0)
+      
+      // Try each AI-generated search term
+      for (const searchTerm of searchTerms) {
+        try {
+          const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=demo&q=${encodeURIComponent(searchTerm)}&limit=10&rating=g`)
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (data.data && data.data.length > 0) {
+              const randomIndex = Math.floor(Math.random() * Math.min(data.data.length, 5))
+              const gifUrl = data.data[randomIndex].images.fixed_height.url
+              
+              // Quick validation that GIF loads
+              try {
+                const testResponse = await fetch(gifUrl, { method: 'HEAD' })
+                if (testResponse.ok) {
+                  return gifUrl
+                }
+              } catch (e) {
+                continue
               }
-            } catch (e) {
-              // Continue to next option if URL test fails
             }
           }
+        } catch (error) {
+          console.log(`Failed to fetch meme for AI term: ${searchTerm}`)
         }
-      } catch (error) {
-        console.log(`Failed to fetch meme for query: ${query}`)
       }
+    } catch (error) {
+      console.log('AI meme search failed, using fallbacks')
     }
     
-    // Generic celebration fallbacks with variety
-    const fallbackMemes = [
-      'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif', // party
-      'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif', // celebration
-      'https://media.giphy.com/media/l0MYw8lPNo1jhAgI8/giphy.gif',  // happy dance
-      'https://media.giphy.com/media/26BRrSvJUa0crqw4E/giphy.gif',  // confetti
-      'https://media.giphy.com/media/artj92V8o75VPL7AeQ/giphy.gif'  // cheering
+    // Holiday-themed fallbacks that are actually related to celebrations
+    const celebrationMemes = [
+      'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif', // confetti party
+      'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif', // celebration dance
+      'https://media.giphy.com/media/26BRrSvJUa0crqw4E/giphy.gif',  // confetti explosion
+      'https://media.giphy.com/media/artj92V8o75VPL7AeQ/giphy.gif', // happy cheering
+      'https://media.giphy.com/media/l0MYw8lPNo1jhAgI8/giphy.gif'   // happy dance
     ]
     
-    const index = (randomSeed + (forceNew ? Math.random() * 1000 : 0)) % fallbackMemes.length
-    return fallbackMemes[Math.floor(index)]
+    const index = forceNew ? 
+      Math.floor(Math.random() * celebrationMemes.length) : 
+      Math.floor(Date.now() / 3600000) % celebrationMemes.length
+    return celebrationMemes[index]
   }
 
   const loadContent = async (forceRefresh = false) => {
