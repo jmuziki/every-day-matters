@@ -111,32 +111,86 @@ Respond with just the holiday name exactly as listed above, followed by | and a 
     return holidays[0]
   }
 
-  const generateMeme = async (holiday: Holiday) => {
+  const generateMeme = async (holiday: Holiday, forceNew = false) => {
     const holidayName = holiday.name.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim()
     
-    // Try different search combinations prioritizing holiday-specific content
+    // Holiday-specific meme mappings for better results
+    const holidayMemes: Record<string, string[]> = {
+      'national tequila day': [
+        'https://media.giphy.com/media/3o7TKu8D1d12Eo9wSQ/giphy.gif', // tequila party
+        'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif', // margarita
+        'https://media.giphy.com/media/xT9IgG50Fb7Mi0prBC/giphy.gif'  // lime and salt
+      ],
+      'coffee appreciation day': [
+        'https://media.giphy.com/media/lp0D8EezWMXBhcQygb/giphy.gif', // coffee love
+        'https://media.giphy.com/media/13HgwGsXF0aiGY/giphy.gif',     // need coffee
+        'https://media.giphy.com/media/hsKWkNj5QnleyAz8gw/giphy.gif'   // coffee brewing
+      ],
+      'international debugging day': [
+        'https://media.giphy.com/media/26n6Gx9moCgs1pUuk/giphy.gif', // computer typing
+        'https://media.giphy.com/media/QeIyCEiuRKGlO/giphy.gif',     // programming
+        'https://media.giphy.com/media/1iu8uG2cjYFZS6wTxv/giphy.gif'  // bug fixing
+      ],
+      'productive coding day': [
+        'https://media.giphy.com/media/13HgwGsXF0aiGY/giphy.gif',     // typing fast
+        'https://media.giphy.com/media/3o7btPCcdNniyf0ArS/giphy.gif', // hacker typing
+        'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif'   // productive
+      ],
+      'code quality day': [
+        'https://media.giphy.com/media/3o7TKU8RvQuomFfUUU/giphy.gif', // clean code
+        'https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif',  // refactoring
+        'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif'   // quality work
+      ],
+      'pi day': [
+        'https://media.giphy.com/media/3o7qDWp7hxhi1N8oF2/giphy.gif', // pi calculation
+        'https://media.giphy.com/media/xT5LMHxhOfscxPfIfm/giphy.gif', // math
+        'https://media.giphy.com/media/DHqth0hVQoIzS/giphy.gif'       // pie/pi pun
+      ],
+      'april fools day': [
+        'https://media.giphy.com/media/3o6MboyKWb1N2jvmw8/giphy.gif', // pranks
+        'https://media.giphy.com/media/26FLdmIp6wJr91JAI/giphy.gif',  // jokes
+        'https://media.giphy.com/media/l0MYw0lxRbJ3Bec2Q/giphy.gif'   // fooled
+      ]
+    }
+    
+    // Add random seed to ensure variety on refresh
+    const randomSeed = forceNew ? Date.now() : Math.floor(Date.now() / 3600000) // Changes every hour or on force
+    
+    // First try holiday-specific memes
+    const holidayKey = holidayName.toLowerCase()
+    if (holidayMemes[holidayKey]) {
+      const memes = holidayMemes[holidayKey]
+      const index = (randomSeed + (forceNew ? Math.random() * 1000 : 0)) % memes.length
+      return memes[Math.floor(index)]
+    }
+    
+    // Try Giphy API as backup with better error handling
     const queries = [
       `${holidayName} meme`,
       `${holidayName} funny`,
       `${holidayName} gif`,
-      `${holidayName} celebration`,
-      `${holidayName} humor`,
-      // Fallback to engineering-themed if holiday-specific fails
-      `engineering ${holidayName}`,
-      'programming holiday meme',
-      'developer celebration meme'
+      `${holidayName} celebration`
     ]
     
     for (const query of queries) {
       try {
-        const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=demo&q=${encodeURIComponent(query)}&limit=10&rating=g`)
+        const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=demo&q=${encodeURIComponent(query)}&limit=20&rating=g&random_id=${randomSeed}`)
         
         if (response.ok) {
           const data = await response.json()
           if (data.data && data.data.length > 0) {
-            // Pick a random gif from the results
-            const randomIndex = Math.floor(Math.random() * Math.min(data.data.length, 5))
-            return data.data[randomIndex].images.fixed_height.url
+            const randomIndex = Math.floor(Math.random() * Math.min(data.data.length, 10))
+            const gifUrl = data.data[randomIndex].images.fixed_height.url
+            
+            // Verify the gif URL is accessible
+            try {
+              const testResponse = await fetch(gifUrl, { method: 'HEAD' })
+              if (testResponse.ok) {
+                return gifUrl
+              }
+            } catch (e) {
+              // Continue to next option if URL test fails
+            }
           }
         }
       } catch (error) {
@@ -144,18 +198,27 @@ Respond with just the holiday name exactly as listed above, followed by | and a 
       }
     }
     
-    // Fallback to a generic celebration gif
-    return 'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif'
+    // Generic celebration fallbacks with variety
+    const fallbackMemes = [
+      'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif', // party
+      'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif', // celebration
+      'https://media.giphy.com/media/l0MYw8lPNo1jhAgI8/giphy.gif',  // happy dance
+      'https://media.giphy.com/media/26BRrSvJUa0crqw4E/giphy.gif',  // confetti
+      'https://media.giphy.com/media/artj92V8o75VPL7AeQ/giphy.gif'  // cheering
+    ]
+    
+    const index = (randomSeed + (forceNew ? Math.random() * 1000 : 0)) % fallbackMemes.length
+    return fallbackMemes[Math.floor(index)]
   }
 
-  const loadContent = async () => {
+  const loadContent = async (forceRefresh = false) => {
     setIsLoading(true)
     try {
       const holidays = await fetchHolidays()
       const selectedHoliday = await selectBestHoliday(holidays)
       
       setMemeLoading(true)
-      const memeUrl = await generateMeme(selectedHoliday)
+      const memeUrl = await generateMeme(selectedHoliday, forceRefresh)
       setMemeLoading(false)
       
       const newContent: DailyContent = {
@@ -175,7 +238,9 @@ Respond with just the holiday name exactly as listed above, followed by | and a 
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
-    await loadContent()
+    // Clear existing content to force a fresh meme generation
+    setContent(null)
+    await loadContent(true) // Force refresh with new meme
     setIsRefreshing(false)
     toast.success('Content refreshed!')
   }
