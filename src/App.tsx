@@ -112,19 +112,17 @@ Respond with just the holiday name exactly as listed above, followed by | and a 
   }
 
   const generateMeme = async (holiday: Holiday) => {
-    const searchTerms = [
-      holiday.name.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim(),
-      'engineering',
-      'programming',
-      'developer',
-      'coding'
-    ]
+    const holidayName = holiday.name.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim()
     
-    // Try different search combinations
+    // Try different search combinations prioritizing holiday-specific content
     const queries = [
-      `${searchTerms[0]} meme`,
-      `${searchTerms[0]} funny`,
-      `engineering ${searchTerms[0]}`,
+      `${holidayName} meme`,
+      `${holidayName} funny`,
+      `${holidayName} gif`,
+      `${holidayName} celebration`,
+      `${holidayName} humor`,
+      // Fallback to engineering-themed if holiday-specific fails
+      `engineering ${holidayName}`,
       'programming holiday meme',
       'developer celebration meme'
     ]
