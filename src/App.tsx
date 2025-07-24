@@ -18,13 +18,14 @@ interface Holiday {
 interface DailyContent {
   date: string
   holiday: Holiday
-  memeText: string
+  memeUrl: string
 }
 
 function App() {
   const [content, setContent] = useKV<DailyContent | null>('daily-holiday-content', null)
   const [isLoading, setIsLoading] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [memeLoading, setMemeLoading] = useState(false)
 
   const today = new Date().toDateString()
 
@@ -111,22 +112,42 @@ Respond with just the holiday name exactly as listed above, followed by | and a 
   }
 
   const generateMeme = async (holiday: Holiday) => {
-    const prompt = spark.llmPrompt`Create a funny meme text for "${holiday.name}" that would appeal to software engineers and developers. 
-
-The meme should:
-- Be workplace appropriate
-- Relate to programming/engineering culture
-- Be witty and shareable
-- Reference common developer experiences
-
-Keep it short and punchy - just return the meme text, nothing else.`
-
-    try {
-      const memeText = await spark.llm(prompt, 'gpt-4o-mini')
-      return memeText.replace(/^["']|["']$/g, '') // Remove surrounding quotes
-    } catch (error) {
-      return `Happy ${holiday.name}! 🎉\nTime to celebrate with some quality code!`
+    const searchTerms = [
+      holiday.name.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim(),
+      'engineering',
+      'programming',
+      'developer',
+      'coding'
+    ]
+    
+    // Try different search combinations
+    const queries = [
+      `${searchTerms[0]} meme`,
+      `${searchTerms[0]} funny`,
+      `engineering ${searchTerms[0]}`,
+      'programming holiday meme',
+      'developer celebration meme'
+    ]
+    
+    for (const query of queries) {
+      try {
+        const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=demo&q=${encodeURIComponent(query)}&limit=10&rating=g`)
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.data && data.data.length > 0) {
+            // Pick a random gif from the results
+            const randomIndex = Math.floor(Math.random() * Math.min(data.data.length, 5))
+            return data.data[randomIndex].images.fixed_height.url
+          }
+        }
+      } catch (error) {
+        console.log(`Failed to fetch meme for query: ${query}`)
+      }
     }
+    
+    // Fallback to a generic celebration gif
+    return 'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif'
   }
 
   const loadContent = async () => {
@@ -134,17 +155,21 @@ Keep it short and punchy - just return the meme text, nothing else.`
     try {
       const holidays = await fetchHolidays()
       const selectedHoliday = await selectBestHoliday(holidays)
-      const memeText = await generateMeme(selectedHoliday)
+      
+      setMemeLoading(true)
+      const memeUrl = await generateMeme(selectedHoliday)
+      setMemeLoading(false)
       
       const newContent: DailyContent = {
         date: today,
         holiday: selectedHoliday,
-        memeText
+        memeUrl
       }
       
       setContent(newContent)
     } catch (error) {
       toast.error('Failed to load holiday content')
+      setMemeLoading(false)
     } finally {
       setIsLoading(false)
     }
@@ -160,7 +185,7 @@ Keep it short and punchy - just return the meme text, nothing else.`
   const handleShare = () => {
     if (!content) return
     
-    const shareText = `🎉 Today's Holiday: ${content.holiday.name}\n\n${content.memeText}\n\n#HolidayFun #Engineering`
+    const shareText = `🎉 Today's Holiday: ${content.holiday.name}\n\nCheck out this celebration! ${content.memeUrl}\n\n#HolidayFun #Engineering`
     
     if (navigator.share) {
       navigator.share({
@@ -235,14 +260,29 @@ Keep it short and punchy - just return the meme text, nothing else.`
                 </div>
               )}
 
-              <div className="bg-muted border-2 border-dashed border-border rounded-lg p-6 text-center">
-                <div className="space-y-2">
-                  <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+              <div className="bg-muted border-2 border-dashed border-border rounded-lg overflow-hidden">
+                <div className="p-4 border-b border-border">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium text-center">
                     Engineering Team Meme
                   </div>
-                  <div className="text-lg font-semibold text-foreground whitespace-pre-line">
-                    {content.memeText}
-                  </div>
+                </div>
+                <div className="aspect-video bg-card flex items-center justify-center">
+                  {memeLoading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <RefreshCw size={24} className="animate-spin text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Loading meme...</span>
+                    </div>
+                  ) : (
+                    <img 
+                      src={content.memeUrl} 
+                      alt={`${content.holiday.name} meme`}
+                      className="max-w-full max-h-full object-contain rounded"
+                      onError={(e) => {
+                        // Fallback to a generic celebration gif if the image fails to load
+                        (e.target as HTMLImageElement).src = 'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif'
+                      }}
+                    />
+                  )}
                 </div>
               </div>
 
