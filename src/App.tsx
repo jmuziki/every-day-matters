@@ -383,7 +383,7 @@ Respond with just the holiday name exactly as listed above, followed by | and a 
         ) : null}
 
         <footer className="text-center text-xs text-muted-foreground">
-          Bringing daily joy to engineering teams, one holiday at a time
+          designed by humans, built by AI
         </footer>
       </div>
       <Toaster />
